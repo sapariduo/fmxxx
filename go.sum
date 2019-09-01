@@ -1,0 +1,4 @@
+github.com/leesper/holmes v0.0.0-20171009035300-f8fb30cfed35 h1:TTOxTGTG3LlYDZsgdZpnz9chgsQXqEFD2gSdvILzMl8=
+github.com/leesper/holmes v0.0.0-20171009035300-f8fb30cfed35/go.mod h1:/SSS7YKE9QBRzFb4JkOxCOeKnY2PIui6Bstblq658ys=
+github.com/sapariduo/teleserver v0.0.0-20190829165434-f6a3813cd8da h1:XFYutxMw6amFNJV1flJ7DfdJ2QNoWmdRdTN80cY2AIU=
+github.com/sapariduo/teleserver v0.0.0-20190829165434-f6a3813cd8da/go.mod h1:9n2ZPjk3/PUz9AHWtA9n5NhgiarLdZqK6zZgQgUwY3M=
