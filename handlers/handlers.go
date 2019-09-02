@@ -115,10 +115,10 @@ func ProcessMessage(ctx context.Context, conn ts.WriteCloser) {
 
 }
 
-type FreeTypeCodec struct{}
+type FMXXXCodec struct{}
 
 // Decode decodes the bytes data into Message
-func (codec FreeTypeCodec) Decode(raw net.Conn) (ts.Message, error) {
+func (codec FMXXXCodec) Decode(raw net.Conn) (ts.Message, error) {
 	byteChan := make(chan []byte)
 	errorChan := make(chan error)
 
@@ -159,7 +159,7 @@ func (codec FreeTypeCodec) Decode(raw net.Conn) (ts.Message, error) {
 }
 
 // Encode encodes the message into bytes data.
-func (codec FreeTypeCodec) Encode(msg ts.Message) ([]byte, error) {
+func (codec FMXXXCodec) Encode(msg ts.Message) ([]byte, error) {
 	data, err := msg.Serialize()
 	if err != nil {
 		return nil, err

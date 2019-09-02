@@ -1,6 +1,5 @@
 package main
 
-
 import (
 	"net"
 	"os"
@@ -44,7 +43,7 @@ func NewFMServer() *FMXXXServer {
 	})
 	codec := ts.CustomCodecOption(handlers.FreeTypeCodec{})
 
-	workers := ts.WorkerSizeOption(25)
+	workers := ts.WorkerSizeOption(100)
 
 	return &FMXXXServer{
 		ts.NewServer(onConnect, onClose, onError, onMessage, codec, workers),
