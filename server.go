@@ -1,16 +1,26 @@
 package main
 
 import (
+	"flag"
+	"log"
 	"net"
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/leesper/holmes"
+	"github.com/nsqio/go-nsq"
 	"github.com/sapariduo/fmxxx/handlers"
 	ts "github.com/sapariduo/teleserver"
+)
+
+var (
+	port  = flag.Int("port", 11000, "Port")
+	debug = flag.Bool("debug", false, "use log debug mode")
+	Pub   *nsq.Producer
 )
 
 // EchoServer represents the echo server.
@@ -41,7 +51,7 @@ func NewFMServer() *FMXXXServer {
 	onMessage := ts.OnMessageOption(func(msg ts.Message, conn ts.WriteCloser) {
 		holmes.Infoln("receving message")
 	})
-	codec := ts.CustomCodecOption(handlers.FreeTypeCodec{})
+	codec := ts.CustomCodecOption(handlers.FMXXXCodec{})
 
 	workers := ts.WorkerSizeOption(100)
 
@@ -50,14 +60,32 @@ func NewFMServer() *FMXXXServer {
 	}
 }
 
+func init() {
+	conf := nsq.NewConfig()
+	// conf.ReadTimeout = (10 * time.Second)
+	conf.MaxAttempts = 5
+	prod, err := nsq.NewProducer("127.17.0.1:4150", conf)
+	if err != nil {
+		log.Println(err)
+		log.Fatal("Could not create producer, Message Bus not found")
+		os.Exit(0)
+	}
+	handlers.Pub = prod
+}
+
 func main() {
-	defer holmes.Start(holmes.ErrorLevel, holmes.InfoLevel).Stop()
+	flag.Parse()
+	if *debug {
+		defer holmes.Start(holmes.DebugLevel).Stop()
+	} else {
+		defer holmes.Start(holmes.ErrorLevel, holmes.InfoLevel).Stop()
+	}
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	ts.MonitorOn(11000)
+	ts.MonitorOn(*port + 10000)
 	ts.Register(handlers.Message{}.MessageNumber(), handlers.DeserializeMessage, handlers.ProcessMessage)
-
-	l, err := net.Listen("tcp", ":12345")
+	netport := ":" + strconv.Itoa(*port)
+	l, err := net.Listen("tcp", netport)
 	if err != nil {
 		holmes.Fatalf("listen error %v", err)
 	}

@@ -3,6 +3,7 @@ package handlers
 import "time"
 
 const PRECISION = 10000000.0
+const GPSTYPE = 2
 
 type Location struct {
 	Type        string
@@ -10,6 +11,7 @@ type Location struct {
 }
 
 type Record struct {
+	GpsType   int                    `json:"gpstype,omitempty"`
 	Imei      string                 `json:"imei,omitempty"`
 	Location  Location               `json:"location,omitempty"`
 	Time      time.Time              `json:"time,omitempty"`

@@ -43,6 +43,7 @@ func parseData(data []byte, size int, imei string) (elements []Record, err error
 		io := make(map[string]interface{})
 
 		elements[i] = Record{
+			GPSTYPE,
 			imei,
 			Location{"Point",
 				[]float64{longitude, latitude}},

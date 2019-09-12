@@ -5,11 +5,15 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"net"
 
 	"github.com/leesper/holmes"
+	"github.com/nsqio/go-nsq"
 	ts "github.com/sapariduo/teleserver"
+)
+
+var (
+	Pub *nsq.Producer
 )
 
 const (
@@ -67,18 +71,19 @@ func DeserializeMessage(data []byte) (message ts.Message, err error) {
 
 // ProcessMessage process the logic of echo message.
 func ProcessMessage(ctx context.Context, conn ts.WriteCloser) {
-	// var b []byte
-	// var imei string
-	// knownIMEI := true
-	// step := 1
 	msg := ts.MessageFromContext(ctx).(Message)
-	holmes.Debugf("receving message %x\n", msg.Content)
+	c := conn.(*ts.ServerConn)
+	netid := c.RemoteAddr().String()
+	c.SetContextValue("netid", netid)
+	holmes.Debugf("receving message %x from %s\n ", msg.Content, netid)
 	buff := new(bytes.Buffer)
-	imei := conn.(*ts.ServerConn).ContextValue("imei")
+	imei := c.ContextValue("imei")
 	if imei == nil {
-		strimei := string(msg.Content)
-		fmt.Println(strimei)
-		conn.(*ts.ServerConn).SetContextValue("imei", strimei)
+		body := msg.Content
+		size := len(body)
+		strimei := hex.EncodeToString(body[:size])
+		c.SetContextValue("imei", strimei)
+		holmes.Infof("Received message from %s with size %d", strimei, size)
 		buff.Write([]byte{1})
 		res := Response{Content: buff.Bytes()}
 		conn.Write(res)
@@ -86,8 +91,8 @@ func ProcessMessage(ctx context.Context, conn ts.WriteCloser) {
 		buf := msg.Content
 		size := len(buf)
 		stringbuf := hex.EncodeToString(buf[:size])
-
-		holmes.Infof(" Received imei %s, size %d, message %s\n", imei, size, stringbuf)
+		holmes.Infof("Received message from %s with size %d", c.ContextValue("imei"), size)
+		holmes.Debugf(" Received imei %s, size %d, message %s\n", imei, size, stringbuf)
 		elements, err := parseData(buf, size, imei.(string))
 		if err != nil {
 			holmes.Errorf("Error while parsing data %x \n", err)
@@ -104,7 +109,11 @@ func ProcessMessage(ctx context.Context, conn ts.WriteCloser) {
 			// 	fmt.Println("Error inserting element to database", err)
 			// }
 			js, _ := json.Marshal(element)
-			holmes.Infof("%s", string(js))
+			err = Pub.Publish("teltonika", js)
+			if err != nil {
+				holmes.Errorln("Error inserting element to Message Bus", err)
+			}
+			holmes.Debugf("%s", string(js))
 		}
 		resp := []byte{0, 0, 0, uint8(len(elements))}
 
