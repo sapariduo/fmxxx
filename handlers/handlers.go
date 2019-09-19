@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"net"
 
 	"github.com/leesper/holmes"
@@ -22,7 +23,7 @@ const (
 	// MessageLenBytes is the length of length header.
 	MessageLenBytes = 4
 	// MessageMaxBytes is the maximum bytes allowed for application data.
-	MessageMaxBytes = 1 << 10 // 1024
+	MessageMaxBytes = 2 * (1 << 10) // 1024
 
 	MsgType = 5
 )
@@ -81,7 +82,7 @@ func ProcessMessage(ctx context.Context, conn ts.WriteCloser) {
 	if imei == nil {
 		body := msg.Content
 		size := len(body)
-		strimei := hex.EncodeToString(body[:size])
+		strimei := fmt.Sprintf("%s", body[2:])
 		c.SetContextValue("imei", strimei)
 		holmes.Infof("Received message from %s with size %d", strimei, size)
 		buff.Write([]byte{1})
@@ -136,6 +137,7 @@ func (codec FMXXXCodec) Decode(raw net.Conn) (ts.Message, error) {
 		typeData := make([]byte, MessageMaxBytes)
 		// _, err := io.ReadFull(raw, typeData)
 		ln, err := raw.Read(typeData)
+		holmes.Debugln("raw len data", ln)
 		// ln, err := raw.
 		if err != nil {
 			ec <- err
