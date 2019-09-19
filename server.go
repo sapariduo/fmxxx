@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -18,9 +17,11 @@ import (
 )
 
 var (
-	port  = flag.Int("port", 11000, "Port")
-	debug = flag.Bool("debug", false, "use log debug mode")
-	Pub   *nsq.Producer
+	port   = flag.Int("port", 11000, "Port")
+	debug  = flag.Bool("debug", false, "use log debug mode")
+	mqhost = flag.String("mqhost", "", "message queue host")
+	mqport = flag.String("mqport", "", "mesage queue port")
+	// Pub   *nsq.Producer
 )
 
 // EchoServer represents the echo server.
@@ -61,20 +62,30 @@ func NewFMServer() *FMXXXServer {
 }
 
 func init() {
+	flag.Parse()
+	if *mqhost == "" || *mqport == "" {
+		flag.Usage()
+		os.Exit(0)
+	}
 	conf := nsq.NewConfig()
+	nsqAddr := *mqhost + ":" + *mqport
 	// conf.ReadTimeout = (10 * time.Second)
 	conf.MaxAttempts = 5
-	prod, err := nsq.NewProducer("127.17.0.1:4150", conf)
+	prod, err := nsq.NewProducer(nsqAddr, conf)
 	if err != nil {
-		log.Println(err)
-		log.Fatal("Could not create producer, Message Bus not found")
+		holmes.Errorln(err)
+		holmes.Fatalln("Could not create producer, Message Bus not found")
+		os.Exit(0)
+	}
+	err = prod.Ping()
+	if err != nil {
 		os.Exit(0)
 	}
 	handlers.Pub = prod
 }
 
 func main() {
-	flag.Parse()
+	// flag.Parse()
 	if *debug {
 		defer holmes.Start(holmes.DebugLevel).Stop()
 	} else {

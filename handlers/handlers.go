@@ -99,7 +99,8 @@ func ProcessMessage(ctx context.Context, conn ts.WriteCloser) {
 			buff.Write([]byte{0})
 			res := Response{Content: buff.Bytes()}
 			conn.Write(res)
-			conn.Close()
+			c.Close()
+			return
 		}
 
 		for i := 0; i < len(elements); i++ {
@@ -109,11 +110,11 @@ func ProcessMessage(ctx context.Context, conn ts.WriteCloser) {
 			// 	fmt.Println("Error inserting element to database", err)
 			// }
 			js, _ := json.Marshal(element)
-			err = Pub.Publish("teltonika", js)
+			err = Pub.Publish("stream", js)
 			if err != nil {
 				holmes.Errorln("Error inserting element to Message Bus", err)
 			}
-			holmes.Debugf("%s", string(js))
+			holmes.Debugf("net id %s :: %s", c.ContextValue("netid"), string(js))
 		}
 		resp := []byte{0, 0, 0, uint8(len(elements))}
 
