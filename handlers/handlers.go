@@ -135,7 +135,6 @@ func (codec FMXXXCodec) Decode(raw net.Conn) (ts.Message, error) {
 
 	go func(bc chan []byte, ec chan error) {
 		typeData := make([]byte, MessageMaxBytes)
-		// _, err := io.ReadFull(raw, typeData)
 		ln, err := raw.Read(typeData)
 		holmes.Debugln("raw len data", ln)
 		// ln, err := raw.
