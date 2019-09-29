@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/leesper/holmes"
 	"github.com/nsqio/go-nsq"
@@ -94,6 +95,9 @@ func ProcessMessage(ctx context.Context, conn ts.WriteCloser) {
 		stringbuf := hex.EncodeToString(buf[:size])
 		holmes.Infof("Received message from %s with size %d", c.ContextValue("imei"), size)
 		holmes.Debugf(" Received imei %s, size %d, message %s\n", imei, size, stringbuf)
+		if size == 1 {
+			return
+		}
 		elements, err := parseData(buf, size, imei.(string))
 		if err != nil {
 			holmes.Errorf("Error while parsing data %x \n", err)
@@ -110,12 +114,20 @@ func ProcessMessage(ctx context.Context, conn ts.WriteCloser) {
 			// if err != nil {
 			// 	fmt.Println("Error inserting element to database", err)
 			// }
-			js, _ := json.Marshal(element)
-			err = Pub.Publish("stream", js)
+			evt := &Event{
+				From:    c.RemoteAddr().String(),
+				To:      c.LocalAddr().String(),
+				Srvtime: time.Now(),
+				Value:   element,
+			}
+			// js, _ := json.Marshal(element)
+			jsEvt, _ := json.Marshal(evt)
+			err = Pub.Publish("stream", jsEvt)
 			if err != nil {
 				holmes.Errorln("Error inserting element to Message Bus", err)
 			}
-			holmes.Debugf("net id %s :: %s", c.ContextValue("netid"), string(js))
+			// holmes.Debugf("net id %s :: %s", c.ContextValue("netid"), string(js))
+			holmes.Debugln(string(jsEvt))
 		}
 		resp := []byte{0, 0, 0, uint8(len(elements))}
 

@@ -22,3 +22,10 @@ type Record struct {
 	EventID   uint8                  `json:"event_id,omitempty"`
 	Payload   map[string]interface{} `json:"payload,omitempty"`
 }
+
+type Event struct {
+	From    string    `json:"_from,omitempty"`
+	To      string    `json:"_to,omitempty"`
+	Srvtime time.Time `json:"_srvtime,omitempty"`
+	Value   Record    `json:"_value,omitempty"`
+}
